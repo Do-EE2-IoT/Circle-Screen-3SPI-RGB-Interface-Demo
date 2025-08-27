@@ -116,25 +116,29 @@ static const st7701_lcd_init_cmd_t lcd_init_cmds[] = {
     {0x29, (uint8_t[]){0x00}, 0, 0},
 };
 
+// void fill_color_raw(esp_lcd_panel_handle_t panel, uint32_t color888)
+// {
+//     size_t pixels = LV_HOR_RES * LV_VER_RES;
 
+//     // Cấp phát buffer trong PSRAM, dùng cho DMA
+//     uint32_t *buf = heap_caps_malloc(pixels * sizeof(uint32_t),
+//                                      MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT );
+//     if (!buf) {
+//         ESP_LOGE("LCD", "Không đủ PSRAM để cấp phát framebuffer");
+//         return;
+//     }
 
-void draw_color_example(void)
-{
-    // Tạo một object kiểu box
-    lv_obj_t *color_box = lv_obj_create(lv_scr_act());
+//     // Fill buffer bằng màu yêu cầu
+//     for (size_t i = 0; i < pixels; i++) {
+//         buf[i] = color888;
+//     }
 
-    // Đặt kích thước
-    lv_obj_set_size(color_box, 100, 100);
+//     // Vẽ lên màn hình
+//     esp_lcd_panel_draw_bitmap(panel, 0, 0, LV_HOR_RES, LV_VER_RES, buf);
 
-    // Đặt vị trí (center màn hình)
-    lv_obj_center(color_box);
-
-    // Set màu nền (ví dụ: màu đỏ)
-    lv_obj_set_style_bg_color(color_box, lv_color_hex(0x800080), LV_PART_MAIN);
-    lv_obj_set_style_bg_opa(color_box, LV_OPA_COVER, LV_PART_MAIN);
-}
-
-
+//     // Giải phóng bộ nhớ
+//     heap_caps_free(buf);
+// }
 
 void app_main()
 {
@@ -161,6 +165,7 @@ void app_main()
     ESP_ERROR_CHECK(esp_lcd_new_panel_io_3wire_spi(&io_config, &io_handle));
 
     ESP_LOGI(TAG, "Install ST7701 panel driver");
+
     esp_lcd_panel_handle_t lcd_handle = NULL;
     esp_lcd_rgb_panel_config_t rgb_config = {
         .clk_src = LCD_CLK_SRC_DEFAULT,
@@ -173,22 +178,26 @@ void app_main()
         .hsync_gpio_num = EXAMPLE_LCD_IO_RGB_HSYNC,
         .disp_gpio_num = EXAMPLE_LCD_IO_RGB_DISP,
         .data_gpio_nums = {
-            EXAMPLE_LCD_IO_RGB_DATA0,
-            EXAMPLE_LCD_IO_RGB_DATA1,
-            EXAMPLE_LCD_IO_RGB_DATA2,
-            EXAMPLE_LCD_IO_RGB_DATA3,
-            EXAMPLE_LCD_IO_RGB_DATA4,
-            EXAMPLE_LCD_IO_RGB_DATA5,
-            EXAMPLE_LCD_IO_RGB_DATA6,
-            EXAMPLE_LCD_IO_RGB_DATA7,
-            EXAMPLE_LCD_IO_RGB_DATA8,
-            EXAMPLE_LCD_IO_RGB_DATA9,
-            EXAMPLE_LCD_IO_RGB_DATA10,
-            EXAMPLE_LCD_IO_RGB_DATA11,
-            EXAMPLE_LCD_IO_RGB_DATA12,
-            EXAMPLE_LCD_IO_RGB_DATA13,
-            EXAMPLE_LCD_IO_RGB_DATA14,
-            EXAMPLE_LCD_IO_RGB_DATA15,
+            EXAMPLE_LCD_IO_RGB_DATA17, // R5
+            EXAMPLE_LCD_IO_RGB_DATA16, // R4
+            EXAMPLE_LCD_IO_RGB_DATA15, // R3
+            EXAMPLE_LCD_IO_RGB_DATA14, // R2
+            EXAMPLE_LCD_IO_RGB_DATA13, // R1
+            
+            
+            EXAMPLE_LCD_IO_RGB_DATA11,  // G5
+            EXAMPLE_LCD_IO_RGB_DATA10,  // G4
+            EXAMPLE_LCD_IO_RGB_DATA9,  // G3
+            EXAMPLE_LCD_IO_RGB_DATA8,  // G2
+            EXAMPLE_LCD_IO_RGB_DATA7, // G1
+            EXAMPLE_LCD_IO_RGB_DATA6, // G0
+
+            EXAMPLE_LCD_IO_RGB_DATA5,  // B5
+            EXAMPLE_LCD_IO_RGB_DATA4,  // B4
+            EXAMPLE_LCD_IO_RGB_DATA3,  // B3
+            EXAMPLE_LCD_IO_RGB_DATA2,  // B2
+            EXAMPLE_LCD_IO_RGB_DATA1,  // B1
+            
         },
         .timings = ST7701_480_480_PANEL_60HZ_RGB_TIMING(),
         .flags.fb_in_psram = 1,
@@ -281,25 +290,44 @@ void app_main()
     gpio_config_t io_conf = {
         .intr_type = GPIO_INTR_DISABLE, // không dùng interrupt
         .mode = GPIO_MODE_OUTPUT,       // cấu hình output
-        .pin_bit_mask = (1ULL << EXAMPLE_LCD_IO_RGB_DATA16) | (1ULL << EXAMPLE_LCD_IO_RGB_DATA17),
+        .pin_bit_mask = (1ULL << EXAMPLE_LCD_IO_RGB_DATA0) | (1ULL << EXAMPLE_LCD_IO_RGB_DATA12),
         .pull_down_en = 0, // không kéo xuống
         .pull_up_en = 0    // không kéo lên
     };
     gpio_config(&io_conf);
-    gpio_set_level(EXAMPLE_LCD_IO_RGB_DATA16, 1);
-    gpio_set_level(EXAMPLE_LCD_IO_RGB_DATA17, 0);
+    gpio_set_level(EXAMPLE_LCD_IO_RGB_DATA0, 0);
+    gpio_set_level(EXAMPLE_LCD_IO_RGB_DATA12, 0);
 
     // if (lvgl_port_lock(-1))
     // {
     //     //  lv_demo_stress();
     //     // lv_demo_benchmark();
-    //     lv_demo_music();
-    //     // lv_demo_widgets();
+    //    // lv_demo_music();
+    //      lv_demo_widgets();
 
     //     // Release the mutex
     //     lvgl_port_unlock();
     // }
 
-    draw_color_example();
+    // Tạo một object cơ bản
+    lv_obj_t *circle = lv_obj_create(lv_scr_act());
 
+    // Đặt kích thước 480x480
+    lv_obj_set_size(circle, 480, 480);
+
+    // Canh giữa màn hình
+    lv_obj_center(circle);
+
+    // Style: nền đỏ, không viền, bo tròn thành hình tròn
+    lv_obj_set_style_bg_color(circle, lv_color_hex(0x000000), 0); // màu đỏ
+    lv_obj_center(circle);
+    lv_obj_set_style_border_width(circle, 0, 0);                  // bỏ viền
+    lv_obj_set_style_radius(circle, LV_RADIUS_CIRCLE, 0);         // bo tròn hoàn toàn
+
+    lv_obj_t * circle_2 = lv_obj_create(circle);
+    lv_obj_set_size(circle_2, 200, 200);
+    lv_obj_center(circle_2);
+    lv_obj_set_style_bg_color(circle_2, lv_color_hex(0x00FF00), 0);   // màu đỏ
+    lv_obj_set_style_border_width(circle_2, 0, 0);
+    
 }
