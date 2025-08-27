@@ -24,7 +24,7 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 #define EXAMPLE_LCD_H_RES (480)
 #define EXAMPLE_LCD_V_RES (480)
-#define EXAMPLE_LCD_BIT_PER_PIXEL (18)
+#define EXAMPLE_LCD_BIT_PER_PIXEL (16)
 #define EXAMPLE_RGB_BIT_PER_PIXEL (16)
 #define EXAMPLE_RGB_DATA_WIDTH (16)
 #define EXAMPLE_RGB_BOUNCE_BUFFER_SIZE (EXAMPLE_LCD_H_RES * CONFIG_EXAMPLE_LCD_RGB_BOUNCE_BUFFER_HEIGHT)
@@ -114,9 +114,10 @@ static const st7701_lcd_init_cmd_t lcd_init_cmds[] = {
     {0xFF, (uint8_t[]){0x77, 0x01, 0x00, 0x00, 0x00}, 5, 0},
     {0x11, (uint8_t[]){0x00}, 0, 120},
     {0x29, (uint8_t[]){0x00}, 0, 0},
+    // {0x22, (uint8_t[]){0x00}, 1, 0},
+    {0x13, (uint8_t[]){0x00}, 1, 0},
+
 };
-
-
 
 void draw_color_example(void)
 {
@@ -124,17 +125,15 @@ void draw_color_example(void)
     lv_obj_t *color_box = lv_obj_create(lv_scr_act());
 
     // Đặt kích thước
-    lv_obj_set_size(color_box, 100, 100);
+    lv_obj_set_size(color_box, 480, 480);
 
     // Đặt vị trí (center màn hình)
     lv_obj_center(color_box);
 
     // Set màu nền (ví dụ: màu đỏ)
-    lv_obj_set_style_bg_color(color_box, lv_color_hex(0x800080), LV_PART_MAIN);
+    lv_obj_set_style_bg_color(color_box, lv_color_hex(0x0000FF), LV_PART_MAIN);
     lv_obj_set_style_bg_opa(color_box, LV_OPA_COVER, LV_PART_MAIN);
 }
-
-
 
 void app_main()
 {
@@ -173,7 +172,6 @@ void app_main()
         .hsync_gpio_num = EXAMPLE_LCD_IO_RGB_HSYNC,
         .disp_gpio_num = EXAMPLE_LCD_IO_RGB_DISP,
         .data_gpio_nums = {
-            EXAMPLE_LCD_IO_RGB_DATA0,
             EXAMPLE_LCD_IO_RGB_DATA1,
             EXAMPLE_LCD_IO_RGB_DATA2,
             EXAMPLE_LCD_IO_RGB_DATA3,
@@ -185,11 +183,11 @@ void app_main()
             EXAMPLE_LCD_IO_RGB_DATA9,
             EXAMPLE_LCD_IO_RGB_DATA10,
             EXAMPLE_LCD_IO_RGB_DATA11,
-            EXAMPLE_LCD_IO_RGB_DATA12,
             EXAMPLE_LCD_IO_RGB_DATA13,
             EXAMPLE_LCD_IO_RGB_DATA14,
             EXAMPLE_LCD_IO_RGB_DATA15,
-        },
+            EXAMPLE_LCD_IO_RGB_DATA16,
+            EXAMPLE_LCD_IO_RGB_DATA17},
         .timings = ST7701_480_480_PANEL_60HZ_RGB_TIMING(),
         .flags.fb_in_psram = 1,
         .num_fbs = LVGL_PORT_LCD_BUFFER_NUMS,
@@ -281,25 +279,81 @@ void app_main()
     gpio_config_t io_conf = {
         .intr_type = GPIO_INTR_DISABLE, // không dùng interrupt
         .mode = GPIO_MODE_OUTPUT,       // cấu hình output
-        .pin_bit_mask = (1ULL << EXAMPLE_LCD_IO_RGB_DATA16) | (1ULL << EXAMPLE_LCD_IO_RGB_DATA17),
+        .pin_bit_mask = (1ULL << EXAMPLE_LCD_IO_RGB_DATA0) | (1ULL << EXAMPLE_LCD_IO_RGB_DATA12),
         .pull_down_en = 0, // không kéo xuống
         .pull_up_en = 0    // không kéo lên
     };
     gpio_config(&io_conf);
-    gpio_set_level(EXAMPLE_LCD_IO_RGB_DATA16, 1);
-    gpio_set_level(EXAMPLE_LCD_IO_RGB_DATA17, 0);
+    gpio_set_level(EXAMPLE_LCD_IO_RGB_DATA0, 0);
+    gpio_set_level(EXAMPLE_LCD_IO_RGB_DATA12, 0);
+
+    // gpio_set_level(EXAMPLE_LCD_IO_RST, 0);
+    // vTaskDelay(pdMS_TO_TICKS(100));
+    // gpio_set_level(EXAMPLE_LCD_IO_RST, 1);
+
+       lv_refr_now(NULL);
+
+    if (lvgl_port_lock(-1))
+    {
+        lv_obj_t *new_screen = lv_obj_create(NULL); // Tạo screen mới
+        lv_scr_load(new_screen);
+
+        lv_obj_set_size(new_screen, 490, 490);
+        lv_obj_align(new_screen, LV_ALIGN_CENTER, 0, 0);
+        lv_obj_set_style_bg_color(new_screen, lv_color_hex(0x000000), 0);
+        lv_obj_set_scrollbar_mode(new_screen, LV_SCROLLBAR_MODE_OFF);
+        lv_obj_set_style_bg_opa(new_screen, LV_OPA_COVER, LV_PART_MAIN);
+
+        lv_obj_t *circle = lv_obj_create(new_screen);
+        lv_obj_set_size(circle, 490, 490); // 430
+        lv_obj_set_pos(circle, 0,0);
+        lv_obj_set_style_bg_color(circle, lv_color_hex(0x000000), 0);
+        lv_obj_set_style_radius(circle, LV_RADIUS_CIRCLE, LV_PART_MAIN);
+        lv_obj_set_scrollbar_mode(circle, LV_SCROLLBAR_MODE_OFF);
+        lv_obj_set_style_bg_opa(circle, LV_OPA_COVER, LV_PART_MAIN);
+
+            // Tạo một object kiểu box
+        lv_obj_t *color_box = lv_obj_create(circle);
+
+        // Đặt kích thước
+        lv_obj_set_size(color_box, 480, 480);
+
+        // Đặt vị trí (center màn hình)
+        lv_obj_center(color_box);
+
+        // Set màu nền (ví dụ: màu xanh)
+        lv_obj_set_style_bg_color(color_box, lv_color_hex(0xFF0000), LV_PART_MAIN);
+        lv_obj_set_style_bg_opa(color_box, LV_OPA_COVER, LV_PART_MAIN);
+
+        // lv_obj_t *small_box = lv_obj_create(color_box); // Tạo trên cùng screen
+
+        // // // Đặt kích thước 200x200
+        //  lv_obj_set_size(small_box, 200, 200);
+
+        // // // Đặt vị trí center (sẽ nằm lên trên hình vuông lớn)
+        // lv_obj_center(small_box);
+
+        // // // Set màu khác để phân biệt (ví dụ: màu đỏ)
+        // lv_obj_set_style_bg_color(small_box, lv_color_hex(0xFF0000), LV_PART_MAIN);
+        // lv_obj_set_style_bg_opa(small_box, LV_OPA_COVER, LV_PART_MAIN);
+
+        // // // Tùy chọn: thêm viền cho hình vuông nhỏ
+        // lv_obj_set_style_border_width(small_box, 2, LV_PART_MAIN);
+        // lv_obj_set_style_border_color(small_box, lv_color_hex(0xFFFFFF), LV_PART_MAIN);
+
+        lvgl_port_unlock();
+    }
 
     // if (lvgl_port_lock(-1))
     // {
     //     //  lv_demo_stress();
     //     // lv_demo_benchmark();
-    //     lv_demo_music();
-    //     // lv_demo_widgets();
+    //     //lv_demo_music();
+    //      lv_demo_widgets();
 
     //     // Release the mutex
     //     lvgl_port_unlock();
     // }
 
-    draw_color_example();
-
+    // draw_color_example();
 }

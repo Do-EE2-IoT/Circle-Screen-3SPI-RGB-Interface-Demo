@@ -572,13 +572,14 @@ static esp_err_t tick_init(void)
 
 static void lvgl_port_task(void *arg)
 {
-    ESP_LOGD(TAG, "Starting LVGL task");
+    ESP_LOGW(TAG, "Starting LVGL task");
 
     uint32_t task_delay_ms = LVGL_PORT_TASK_MAX_DELAY_MS;
     while (1) {
         if (lvgl_port_lock(-1)) {
             task_delay_ms = lv_timer_handler();
             lvgl_port_unlock();
+           // ESP_LOGW(TAG, "Refresh time:ms");
         }
         if (task_delay_ms > LVGL_PORT_TASK_MAX_DELAY_MS) {
             task_delay_ms = LVGL_PORT_TASK_MAX_DELAY_MS;

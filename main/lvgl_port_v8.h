@@ -130,7 +130,7 @@ typedef enum {
 #endif /* EXAMPLE_LVGL_PORT_ROTATION_DEGREE */
 #else
 #define LVGL_PORT_LCD_BUFFER_NUMS   (1)
-#define LVGL_PORT_FULL_REFRESH          (0)
+#define LVGL_PORT_FULL_REFRESH          (1)
 #define LVGL_PORT_DIRECT_MODE           (0)
 #endif /* LVGL_PORT_AVOID_TEAR_ENABLE */
 
